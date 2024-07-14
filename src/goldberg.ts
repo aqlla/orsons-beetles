@@ -1,11 +1,18 @@
+import * as THREE from 'three';
 
+declare global {
+    interface Array<T> {
+        each(fn: (x: any) => void): this;
+        distinct(): this;
+        findPop(predicate: (value: T, index: number) => number): T
+    }
+}
 
-
-
-Array.prototype.each = function(fn, thisArg) {
-    const _this = thisArg || this
-    _this.forEach(fn)
-    return _this
+Array.prototype.each = function<T>(fn: (x: T) => void): Array<T> {
+    // const _this = thisArg || this
+    this.forEach(fn)
+    // return _this
+    return this
 }
 
 Array.prototype.distinct = function() { return uniq(this) }
@@ -20,6 +27,22 @@ Array.prototype.findPop = function(fn) {
     }
     return found 
 }
+
+
+export type Vec3 = {
+	x: number,
+	y: number,
+	z: number
+}
+
+export type Tile = {
+	vertices: [THREE.Vector3],
+	faces?: [THREE.Face],
+	centroid: Vec3,
+	center?: number,
+	facet?: number,
+}
+
 
 export const projectToSphere = (geometry, radius) => {
     geometry.vertices.forEach(vertex =>
@@ -162,7 +185,7 @@ const getTileFromCenter = (geo, cache) => (center, i) => {
     }
 }
 
-const getHexesAroundTile = (geo, cache, limits, tile) => {
+const getHexesAroundTile = (geo, cache, limits, tile): Tile[] => {
     if (cache.length === geo.faces.length) return []
     const { center, faces, facet } = tile
     const searchFaces = limits 
@@ -177,7 +200,7 @@ const getHexesAroundTile = (geo, cache, limits, tile) => {
             return getAdjacentHex(geo, center, cache, facet)(commonEdge)
         })
 
-    const hexes = []
+    const hexes: Tile[] = []
     // Using imperative loop because I ran into call stack limits 
     for (const h of immediateHexes.flat()) {
         hexes.push(...getHexesAroundTile(geo, cache, [2, 4], h))
@@ -190,7 +213,7 @@ const normalize = (radius, vector) =>
 
 
 // Function to group faces into pentagons and hexagons
-export const groupFaces = (geo, radius) => {
+export const groupFaces = (geo) => {
 	const cache = new Set();
 	const pentagons = geo.vertices
 		.keys().toArray()

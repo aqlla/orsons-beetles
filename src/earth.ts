@@ -1,29 +1,15 @@
 import * as THREE from 'three';
 import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js'
-import { groupFaces, toJson } from './goldberg.js';
+import { groupFaces, toJson, Vec3, Tile } from './goldberg.ts';
 
 const sizes = [
 	2, 5, 8, 11, 14, 17, 23, 29, 32, 35, 44, 56, 68, 89
 ]
 
-type Tile = {
-	vertices: [THREE.Vector3],
-	faces?: [THREE.Face],
-	centroid: Vec3,
-	center?: number,
-	facet?: number,
-}
-
 type SphericalCoord = {
 	r: number,
 	phi: number,
 	theta: number
-}
-
-type Vec3 = {
-	x: number,
-	y: number,
-	z: number
 }
 
 type LatLon = {
@@ -136,7 +122,7 @@ const createFresnelMaterial = ({rimHex = 0x0088ff, facingHex = 0x000000} = {}) =
 const generateWorld = (n: number, r: number) => {
 	console.log(`Generating Goldberg... n=${n}, r=${r}`)
 	const ico = new THREE.IcosahedronGeometry(r, n);
-	const tiles = groupFaces(ico, r);
+	const tiles = groupFaces(ico);
 	const blob = new Blob([toJson(tiles)], { type: 'application/json' })
 	// saveAs(blob, `/geometries/goldberg_${n}_${r}.json`)
 	return tiles
