@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {Optional, Tuple} from "./util/types.ts";
 
 declare global {
     interface Array<T> {
@@ -18,14 +19,13 @@ Array.prototype.each = function<T>(fn: (x: T) => void): Array<T> {
 Array.prototype.distinct = function() { return uniq(this) }
 
 
-Array.prototype.findPop = function(fn) {
+Array.prototype.findPop = function<T>(fn: (value: T, index: number) => number): Optional<T> {
     const foundIndex = this.findIndex(fn)
-    let found = undefined
     if (foundIndex > -1) {
-        found = this[foundIndex]
+        const found: T = this[foundIndex]
         this.splice(foundIndex, 1)
+        return found
     }
-    return found 
 }
 
 
@@ -43,12 +43,21 @@ export type Tile = {
 	facet?: number,
 }
 
+export type VertEdge = Tuple<2, number>
 
-export const projectToSphere = (geometry, radius) => {
+
+export const projectToSphere = (geometry, radius: number) => {
     geometry.vertices.forEach(vertex =>
         vertex.normalize().multiplyScalar(radius))
     geometry.verticesNeedUpdate = true;
 }
+
+export type TriVert = {
+    a: number,
+    b: number,
+    c: number,
+}
+
 
 const isEmpty = arr => arr.length === 0
 
@@ -57,27 +66,27 @@ const not = fn => (...args) => !fn(...args)
 const uniq = xs => [...new Set(xs)]
 
 const vecToArr3 = ({x, y, z}) => [x, y, z]
-const hasVertIndex = (i, { a, b, c }) => a === i || b === i || c === i
+const hasVertIndex = (i: number, { a, b, c }: TriVert) => a === i || b === i || c === i
 
-const getFacesWithCommonVertex = faces => i => 
+const getFacesWithCommonVertex = (faces: TriVert[]) => (i: number) =>
 	faces.filter(f => hasVertIndex(i, f))
 
 // Returns array of edge endpoint indices from THREE.Vector3
-const getEdges = ({ a, b, c }) => [ [ a, b ], [ b, c ], [ c, a ] ]
+const getEdges = ({ a, b, c }: TriVert) => [ [ a, b ], [ b, c ], [ c, a ] ]
 
-const getVerts = ({ a, b, c }) => [a, b, c]
+const getVerts = ({ a, b, c }: TriVert) => [a, b, c]
 
 // Apex of triangle: the point opposite the base
-const getApex = base => ({ a, b, c }) => 
+const getApex = base => ({ a, b, c }: TriVert) =>
     [a, b, c].find(v => v !== base[0] && v !== base[1])
 
-const getBase = apex => ({ a, b, c }) => 
+const getBase = apex => ({ a, b, c }: TriVert) =>
     [a, b, c].find(v => v !== apex)
 
-const vertHasNumAdjacentFaces = (n, faces) => i => 
+const vertHasNumAdjacentFaces = (n: number, faces: TriVert[]) => i =>
     getFacesWithCommonVertex(faces)(i).length === n
 
-const faceHasEdge = (edge, face) => 
+const faceHasEdge = (edge: VertEdge, face: TriVert) =>
         hasVertIndex(edge[0], face) && hasVertIndex(edge[1], face)
 
 const findNextFace = ([center, searchVert], searchFaces) => {
@@ -95,7 +104,7 @@ const findNextFace = ([center, searchVert], searchFaces) => {
 }
 
 
-const getAdjacentHex = (geo, oldCenter, cache, facet) => (commonEdge) => {
+const getAdjacentHex = (geo, oldCenter, cache, facet) => (commonEdge: VertEdge) => {
     const adjFace = geo.faces
         // Get faces with edge, filter out face having `oldCenter` vert, as that is the
         // old one which we got the `commonEdge` from.
@@ -104,7 +113,7 @@ const getAdjacentHex = (geo, oldCenter, cache, facet) => (commonEdge) => {
     if (!adjFace) { return [] }
 
     // Get center of the new hex.
-    const center = getApex(commonEdge)(adjFace)
+    const center = getApex(commonEdge)(adjFace)!
 
     // Get other faces which share the new center
     const hexFaces = geo.faces
@@ -112,7 +121,7 @@ const getAdjacentHex = (geo, oldCenter, cache, facet) => (commonEdge) => {
         .each(f => cache.add(f))
 
     const verts = hexFaces
-        .flatMap(({a, b, c}) => [a, b, c])
+        .flatMap(({a, b, c}: TriVert) => [a, b, c])
         .distinct()
         .filter(v => v !== center)
 
@@ -197,7 +206,7 @@ const getHexesAroundTile = (geo, cache, limits, tile): Tile[] => {
         // Get face edge opposite the center vert
         .map(face => {
             const commonEdge = getVerts(face).filter(v => v !== center)
-            return getAdjacentHex(geo, center, cache, facet)(commonEdge)
+            return getAdjacentHex(geo, center, cache, facet)(commonEdge as Tuple<2, number>)
         })
 
     const hexes: Tile[] = []

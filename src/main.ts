@@ -1,47 +1,47 @@
-// import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import Stats from 'three/addons/libs/stats.module.js'
-import { GUI } from 'dat.gui'
-import { getEarth } from './earth.js'
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
+import { getEarth, getTileMap } from './earth.js'
+import { Tile } from './goldberg.js'
 
 const uni = {
     n: 89,
     r: 25,
-    fov: 15,
+    fov: 5,
     scale: 1,
-    atmo_scale: 1.218,
+    atmo_scale: 1.0445,
     wireframe: false,
     flat_shading: false,
     outlines: false,
     moveSpeed: .01,
-    rotationSpeed: .02,
+    rotationSpeed: .03,
     zoomSpeed: .5,
-    rotateEarth: true,
+    rotateEarth: false,
+    axialTiltX: 0,
+    axialTiltY: 0,
 }
+
 
 const scene = new THREE.Scene()
 
-const camera = new THREE.PerspectiveCamera(uni.fov, window.innerWidth / window.innerHeight, 0.1, 1000)
-camera.position.z = 250
+const camera = new THREE.PerspectiveCamera(uni.fov, window.innerWidth / window.innerHeight, 0.1, 5000)
+camera.position.z = 150 + uni.r
 
-const renderer = new THREE.WebGLRenderer()
+const renderer = new THREE.WebGLRenderer({ antialias: true })
 renderer.setSize(window.innerWidth, window.innerHeight)
-const controls = new OrbitControls(camera, renderer.domElement)
-// controls.autoRotate = true
 document.body.appendChild(renderer.domElement)
 
-
-// Basic Lighting
-const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
-scene.add(ambientLight);
+const controls = new OrbitControls(camera, renderer.domElement)
+// controls.screenSpacePanning = true
+controls.listenToKeyEvents(window)
 
 const sunLight = new THREE.DirectionalLight(0xffffff, 2);
 sunLight.position.set(500, 0, 500);
 sunLight.castShadow = true
 scene.add(sunLight);
 
-const helper = new THREE.DirectionalLightHelper( sunLight, 5 );
+const helper = new THREE.DirectionalLightHelper(sunLight, 5);
 scene.add(helper);
 
 const stats = new Stats()
@@ -49,67 +49,169 @@ document.body.appendChild(stats.dom)
 
 const gui = new GUI()
 
-const ocFolder = gui.addFolder('Controls')
-ocFolder.add(controls, 'autoRotate')
+const ocFolder = gui.addFolder('Orbital Controls')
+ocFolder.add(uni, 'moveSpeed', 0.01, 0.5).listen()
+const cPosFolder = ocFolder.addFolder('Target')
+cPosFolder.add(controls.target, 'x', -uni.r, uni.r).listen()
+cPosFolder.add(controls.target, 'y', -uni.r, uni.r).listen()
+cPosFolder.add(controls.target, 'z', -uni.r, uni.r).listen()
 
 const cameraFolder = gui.addFolder('Camera')
-cameraFolder.add(camera, 'fov', 1, 360).onChange(() => {
+cameraFolder.add(camera, 'fov', 0.1, 100).listen().onChange(() => {
     camera.updateProjectionMatrix()
 })
-cameraFolder.add(camera, 'aspect', 0.00001, 10).onChange(() => {
-    camera.updateProjectionMatrix()
-})
-
-// const camLookAtFolder = cameraFolder.addFolder('Look At')
-// camLookAtFolder.add(camera.rotation, 'x', 0, Math.PI * 2)
-// camLookAtFolder.add(camera.rotation, 'y', 0, Math.PI * 2)
-// camLookAtFolder.add(camera.rotation, 'z', 0, Math.PI * 2)
 
 const camPositionFolder = cameraFolder.addFolder('Position')
-camPositionFolder.add(camera.position, 'x', -20, 20)
-camPositionFolder.add(camera.position, 'y', -20, 20)
-camPositionFolder.add(camera.position, 'z', 0, 20)
+camPositionFolder.add(camera.position, 'x', -180, 180).listen()
+camPositionFolder.add(camera.position, 'y', -180, 180).listen()
+camPositionFolder.add(camera.position, 'z', 0, 1000).listen()
 
 cameraFolder.open()
 
-// const sunFolder = gui.addFolder('Sun')
-// sunFolder.add()
-// const ambientLight = gui.addFolder('Ambient Light')
+const sunFolder = gui.addFolder('Sun')
+sunFolder.add(sunLight, 'intensity', 0, 5).listen()
+const sunPosFolder = sunFolder.addFolder('Position')
+sunPosFolder.add(sunLight.position, 'x', uni.r + 10, 1000)
+sunPosFolder.add(sunLight.position, 'y', uni.r + 10, 1000)
+sunPosFolder.add(sunLight.position, 'z', uni.r + 10, 1000)
 
 
+const raycaster = new THREE.Raycaster();
+raycaster.layers.set(1)
+const pointer = new THREE.Vector2();
+
+
+const onPointerMove = (event: PointerEvent) => {
+    // calculate pointer position in normalized device coordinates
+    // (-1 to +1) for both components
+    pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+    pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+}
+
+
+let tileMap
+let prevIntersect: THREE.Object3D
+let prevSelected: string
+
+
+const onclick = (event: MouseEvent) => {
+    console.log(event)
+    if (!!prevSelected) {
+        console.log(tileMap.get(prevSelected))
+    }
+}
+
+const keys: Record<string, boolean> = { w: false, a: false, s: false, d: false };
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 0, 1);
 const Z_AXIS = new THREE.Vector3(0, 1, 0);
 
 
-getEarth().then(({ earth, glowMesh }) => {
-    earth?.rotateOnWorldAxis(Z_AXIS, 23.4 * Math.PI / 180)
-    scene.add(earth!)
-    scene.add(glowMesh!)
-    
-    const clock = new THREE.Clock()
-    let delta
-    
-    function animate() {
-        requestAnimationFrame(animate)
-    
-        delta = clock.getDelta()
-    
-        if (uni.rotateEarth) {
-            // earth?.rotateOnAxis()
-            earth!.rotation.y += uni.rotationSpeed * delta
+getEarth(uni.n, uni.r)
+    .then(({ earth, outlines, glowMesh }) => {
+        let curAxialTiltX = uni.axialTiltX
+        let curAxialTiltY = uni.axialTiltY
+        glowMesh.scale.setScalar(uni.atmo_scale)
+
+        tileMap = getTileMap()
+
+        scene.add(earth!)
+        scene.add(glowMesh!)
+
+        const earthFolder = gui.addFolder('Earth')
+        earthFolder
+            .add(uni, 'axialTiltX', -23.4, 23.4)
+            .listen()
+            .onChange((value: number) => {
+                const delta = curAxialTiltX - value
+                earth.rotateOnAxis(X_AXIS, delta * Math.PI / 180)
+                outlines.rotateOnAxis(X_AXIS, delta * Math.PI / 180)
+                curAxialTiltX = uni.axialTiltX
+            })
+        earthFolder
+            .add(uni, 'axialTiltY', -23.4, 23.4)
+            .listen()
+            .onChange((value: number) => {
+                const delta = curAxialTiltY - value
+                earth.rotateOnWorldAxis(Y_AXIS, delta * Math.PI / 180)
+                outlines.rotateOnWorldAxis(Y_AXIS, delta * Math.PI / 180)
+                curAxialTiltY = uni.axialTiltY
+            })
+
+        earthFolder
+            .add(uni, 'outlines')
+            .listen()
+            .onChange((value: boolean) => {
+                if (value) {
+                    scene.add(outlines)
+                } else {
+                    scene.remove(outlines)
+                }
+            })
+        earthFolder.add(uni, 'atmo_scale', 1.0, 1.3)
+            .listen()
+            .onChange((value: number) => glowMesh.scale.setScalar(value))
+
+        const earthRotFolder = earthFolder.addFolder('Rotation')
+        earthRotFolder.add(uni, 'rotateEarth').name('Enable').listen()
+        earthRotFolder.add(uni, 'rotationSpeed', -1, 1).name('Speed').listen()
+        earthRotFolder.add(earth.rotation, 'x', -180, 180).listen()
+        earthRotFolder.add(earth.rotation, 'y', -180, 180).listen()
+        earthRotFolder.add(earth.rotation, 'z', -180, 180).listen()
+
+
+        const clock = new THREE.Clock()
+        let delta
+
+        function animate() {
+            delta = clock.getDelta()
+
+            if (uni.rotateEarth) {
+                earth.rotation.y += uni.rotationSpeed * delta
+
+                if (uni.outlines) {
+                    outlines.rotation.y += uni.rotationSpeed * delta
+                }
+            }
+
+            if (keys.a) camera.position.applyAxisAngle(camera.up, -uni.moveSpeed)
+            if (keys.d) camera.position.applyAxisAngle(camera.up, uni.moveSpeed)
+            if (keys.w) camera.position.applyAxisAngle(X_AXIS, -uni.moveSpeed)
+            if (keys.s) camera.position.applyAxisAngle(X_AXIS, uni.moveSpeed)
+
+            raycaster.setFromCamera(pointer, camera);
+
+            // calculate objects intersecting the picking ray
+            const intersects = raycaster.intersectObjects(scene.children)
+
+            if (tileMap && intersects.length) {
+                const prevVal = tileMap.get(prevIntersect?.object.uuid)
+                if (prevVal) {
+                    prevIntersect.object.material.color.set(prevVal.color)
+                }
+
+                const uuid = intersects[0].object.uuid
+                if (tileMap.has(uuid)) {
+                    if (uuid !== prevSelected) {
+                        prevSelected = uuid
+                    }
+                    intersects[0].object.material.color.set(0xff0000)
+                }
+                prevIntersect = intersects[0]
+            }
+
+            camera.lookAt(0, 0, 0)
+            renderer.render(scene, camera)
+            stats.update()
+            requestAnimationFrame(animate)
         }
-    
-        camera.lookAt(0, 0, 0)
-        renderer.render(scene, camera)
-        stats.update()
-    }
 
-    animate()
-})
+        animate()
+    })
 
 
-const keys: Record<string, boolean> = { w: false, a: false, s: false, d: false };
+window.addEventListener('click', onclick)
+window.addEventListener('pointermove', onPointerMove);
 
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -122,7 +224,7 @@ document.addEventListener('keydown', (event) => {
         uni.rotateEarth = !uni.rotateEarth
     }
     keys[event.key.toLowerCase()] = true;
-});
+}); 
 
 document.addEventListener('keyup', (event) => {
     keys[event.key.toLowerCase()] = false;

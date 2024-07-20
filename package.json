@@ -14,6 +14,7 @@
     "@types/dat.gui": "^0.7.13",
     "@types/three": "^0.166.0",
     "dat.gui": "^0.7.9",
+    "file-saver": "^2.0.5",
     "gh-pages": "^6.1.1",
     "three": "^0.166.1",
     "typescript": "^5.2.2",

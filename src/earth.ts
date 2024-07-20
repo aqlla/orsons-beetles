@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js'
 import { groupFaces, toJson, Vec3, Tile } from './goldberg.ts';
+import { saveAs } from 'file-saver';
+import { toIndexed } from './BufferGeometryToIndexed.js'
 
 const sizes = [
 	2, 5, 8, 11, 14, 17, 23, 29, 32, 35, 44, 56, 68, 89
@@ -19,22 +21,8 @@ type LatLon = {
 
 type TODO = any
 
-const SUBDIVISIONS = 89
-const radius = 25
-const distance = 50 + 100 / SUBDIVISIONS
-const FOV = 15;
-
-const SCALE = 1;
-const atmosphere_scale = 1.218
 const WIREFRAME = false
 const FLAT_SHADING = false
-// const FLAT_TILES = true
-const OUTLINES = false
-const FLOOR = false
-
-const moveSpeed = .05;
-const rotationSpeed = 2;
-const zoomSpeed = .5;
 
 
 const makeEdgeGeometry = (geo: THREE.BufferGeometry) => new THREE.LineSegments(
@@ -119,14 +107,35 @@ const createFresnelMaterial = ({rimHex = 0x0088ff, facingHex = 0x000000} = {}) =
 }
 
 
-const generateWorld = (n: number, r: number) => {
+const generateWorld = async (n: number, r: number) => {
 	console.log(`Generating Goldberg... n=${n}, r=${r}`)
-	const ico = new THREE.IcosahedronGeometry(r, n);
+	const ico = toIndexed(new THREE.IcosahedronGeometry(r, n))(true, 6)
+	// ico.computeVertexNormals()
+	console.log(ico)
 	const tiles = groupFaces(ico);
 	const blob = new Blob([toJson(tiles)], { type: 'application/json' })
-	// saveAs(blob, `/geometries/goldberg_${n}_${r}.json`)
+	await saveAs(blob, `/geometries/goldberg_${n}_${r}.json`)
 	return tiles
 }
+
+
+
+const isWater = (hexValue: number): boolean => {
+	const threshG = 3
+	const threshR = 9
+    // Ensure the hex value is a valid number
+    if (hexValue < 0x000000 || hexValue > 0xFFFFFF) {
+        return false
+    }
+
+    // Extract the red, green, and blue components
+    const r = (hexValue >> 16) & 0xFF;
+    const g = (hexValue >> 8) & 0xFF;
+    const b = hexValue & 0xFF;
+
+    return b - r > threshR && b - g > threshG
+}
+
 
 
 const getEarthColor = ({ lat, lon }: LatLon, ctx: TODO) => {
@@ -140,20 +149,20 @@ const getEarthColor = ({ lat, lon }: LatLon, ctx: TODO) => {
 	const b = pixel[2];
 
     // Convert RGB to hex
-    return (r << 16) | (g << 8) | b;
+    const raw = (r << 16) | (g << 8) | b
+
+	return isWater(raw)? 0x0040cc : raw
 }
 
 const rotateGeometry = (geo: ConvexGeometry & TODO) => {
 	const rotMat1 = new THREE.Matrix4().makeRotationX(Math.PI / 2)
 	geo.applyMatrix4(rotMat1)
-	// const rotAxialTilt = new THREE.Matrix4().makeRotationZ(-23.4 * Math.PI / 180)
-	// geo.applyMatrix4(rotAxialTilt)
 	geo.vertsNeedUpdate = true
 	return geo
 }
 
 const makeTileGeometry = (tile: Tile) => {
-	const height = 5; //Math.random() * 1.5
+	const height = 1; //Math.random() * 1.5
 	const verts = tile.vertices.map(setVertexHeight(height))
 	const geo = rotateGeometry(new ConvexGeometry(verts))
 	geo.computeVertexNormals()
@@ -162,14 +171,22 @@ const makeTileGeometry = (tile: Tile) => {
 	return geo 
 }
 
-const makeEarthMeshes = (tiles: Array<Tile>) => {
+
+let tileMap = new Map<string, { tile: Tile, color: number }>()
+
+export const getTileMap = () => tileMap
+
+
+const makeEarthMeshes = (tiles: Array<Tile>, radius: number) => {
 	const img = document.getElementById("projection") as HTMLImageElement
 	const canvas = document.createElement('canvas')
 	canvas.width = img.width;
     canvas.height = img.height;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 	ctx?.drawImage(img, 0, 0, img.width, img.height)
+
 	const earth = new THREE.Object3D()
+	const outlines = new THREE.Object3D()
 
 	tiles.forEach(tile => {
 		const geo = makeTileGeometry(tile)
@@ -182,35 +199,36 @@ const makeEarthMeshes = (tiles: Array<Tile>) => {
 		});
 	
 		const mesh = new THREE.Mesh(geo, material)
+		tileMap.set(mesh.uuid, { tile, color })
 		mesh.castShadow = true
 		mesh.layers.enable(1)
 		earth.add(mesh)
 	
-		if (OUTLINES) {
-			earth.add(makeEdgeGeometry(geo))
-		}
+		outlines.add(makeEdgeGeometry(geo))
 	})
 
 	const geo2 = new THREE.SphereGeometry(radius, 80, 80); 
 	const fresnelMat = createFresnelMaterial();
 	const glowMesh = new THREE.Mesh(geo2, fresnelMat);
-	glowMesh.scale.setScalar(atmosphere_scale);
+	
 
 	return {
-		glowMesh, earth
+		glowMesh, earth, outlines
 	}
 }
 
 
-export const getEarth = (): Promise<{ earth?: THREE.Object3D, glowMesh?: THREE.Object3D }> =>
-	fetch(`/geometries/goldberg_${SUBDIVISIONS}_${radius}.json`)
+type EarthMeshes = Record<string, THREE.Object3D>
+
+export const getEarth = (n: number, r: number): Promise<EarthMeshes> =>
+	fetch(`/geometries/goldberg_${n}_${r}.json`)
 		.then(res => res.json())
 		.then(data => data.map(({ center, vertices, facet, centroid }: Tile) => ({ 
 			facet, center, centroid,
 			vertices: vertices.map(v => new THREE.Vector3(...v)) 
 		})))
-		.catch(() => generateWorld(SUBDIVISIONS, radius))
-		.then(tiles => makeEarthMeshes(tiles))
+		.catch(async () => await generateWorld(n, r))
+		.then(tiles => makeEarthMeshes(tiles, r))
 		.catch(error => {
 			console.log(error)
 			return {}
