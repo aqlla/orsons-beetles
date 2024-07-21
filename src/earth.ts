@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js'
-import { groupFaces, toJson, Vec3, Tile } from './goldberg.ts';
+import { groupFaces, toJson, OVec3, Tile } from './goldberg.ts';
 import { saveAs } from 'file-saver';
 import { toIndexed } from './BufferGeometryToIndexed.js'
 
@@ -29,7 +29,7 @@ const makeEdgeGeometry = (geo: THREE.BufferGeometry) => new THREE.LineSegments(
 	new THREE.EdgesGeometry(geo), 
 	new THREE.LineBasicMaterial({ color: 0x080808 }));
 
-const cartesianToSpherical = ({ x, y, z }: Vec3) => {
+const cartesianToSpherical = ({ x, y, z }: OVec3) => {
 	const r = Math.sqrt(x * x + y * y + z * z);
     const theta = Math.acos(z / r);
     const phi = Math.atan2(y, x);
@@ -43,14 +43,14 @@ const sphericalToCartesian = ({ r, theta, phi }: SphericalCoord) => {
     return { x, y, z };
 }
 
-const cartesianToLatLon = ({ x, y, z }: Vec3) => {
+const cartesianToLatLon = ({ x, y, z }: OVec3) => {
     const r = Math.sqrt(x * x + y * y + z * z);
     const lat = Math.asin(z / r);
     const lon = Math.atan2(y, x);
     return { lat, lon };
 }
 
-const setVertexHeight = (height: number) => (vert: Vec3) => {
+const setVertexHeight = (height: number) => (vert: OVec3) => {
 	const spherical = cartesianToSpherical(vert);
 	spherical.r += height
 	const { x, y, z } = sphericalToCartesian(spherical)
@@ -121,7 +121,7 @@ const generateWorld = async (n: number, r: number) => {
 
 
 const isWater = (hexValue: number): boolean => {
-	const threshG = 3
+	const threshG = 5
 	const threshR = 9
     // Ensure the hex value is a valid number
     if (hexValue < 0x000000 || hexValue > 0xFFFFFF) {
@@ -133,7 +133,7 @@ const isWater = (hexValue: number): boolean => {
     const g = (hexValue >> 8) & 0xFF;
     const b = hexValue & 0xFF;
 
-    return b - r > threshR && b - g > threshG
+    return hexValue < 200000 || (b - r > threshR && b - g > threshG)
 }
 
 
@@ -148,10 +148,9 @@ const getEarthColor = ({ lat, lon }: LatLon, ctx: TODO) => {
 	const g = pixel[1];
 	const b = pixel[2];
 
-    // Convert RGB to hex
     const raw = (r << 16) | (g << 8) | b
-
 	return isWater(raw)? 0x0040cc : raw
+	// return (r << 16) | (g << 8) | b
 }
 
 const rotateGeometry = (geo: ConvexGeometry & TODO) => {

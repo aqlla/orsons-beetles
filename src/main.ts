@@ -90,7 +90,7 @@ const onPointerMove = (event: PointerEvent) => {
 
 
 let tileMap
-let prevIntersect: THREE.Object3D
+let prevIntersect: THREE.Mesh
 let prevSelected: string
 
 
@@ -197,7 +197,7 @@ getEarth(uni.n, uni.r)
                     }
                     intersects[0].object.material.color.set(0xff0000)
                 }
-                prevIntersect = intersects[0]
+                prevIntersect = intersects[0] as unknown as THREE.Mesh
             }
 
             camera.lookAt(0, 0, 0)

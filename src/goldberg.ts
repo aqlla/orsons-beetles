@@ -29,7 +29,7 @@ Array.prototype.findPop = function<T>(fn: (value: T, index: number) => number): 
 }
 
 
-export type Vec3 = {
+export type OVec3 = {
 	x: number,
 	y: number,
 	z: number
@@ -38,7 +38,7 @@ export type Vec3 = {
 export type Tile = {
 	vertices: [THREE.Vector3],
 	faces?: [THREE.Face],
-	centroid: Vec3,
+	centroid: OVec3,
 	center?: number,
 	facet?: number,
 }
