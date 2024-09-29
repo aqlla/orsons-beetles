@@ -185,19 +185,19 @@ getEarth(uni.n, uni.r)
             const intersects = raycaster.intersectObjects(scene.children)
 
             if (tileMap && intersects.length) {
-                const prevVal = tileMap.get(prevIntersect?.object.uuid)
-                if (prevVal) {
-                    prevIntersect.object.material.color.set(prevVal.color)
-                }
+                const prevVal = tileMap.get(prevIntersect?.uuid)
+                // if (prevVal) {
+                //     // prevIntersect.object.material.color.set(prevVal.color)
+                // }
 
-                const uuid = intersects[0].object.uuid
-                if (tileMap.has(uuid)) {
-                    if (uuid !== prevSelected) {
-                        prevSelected = uuid
-                    }
-                    intersects[0].object.material.color.set(0xff0000)
-                }
-                prevIntersect = intersects[0] as unknown as THREE.Mesh
+                // const uuid = intersects[0].object.uuid
+                // if (tileMap.has(uuid)) {
+                //     if (uuid !== prevSelected) {
+                //         prevSelected = uuid
+                //     }
+                //     // intersects[0].object.material.color.set(0xff0000)
+                // }
+                // prevIntersect = intersects[0] as unknown as THREE.Mesh
             }
 
             camera.lookAt(0, 0, 0)

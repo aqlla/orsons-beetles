@@ -2,10 +2,12 @@ import {Tuple} from "../../util/types.ts";
 
 
 export type Vec<N extends number> = Tuple<N, number>
+
 export type Vec3 = Vec<3>
 
 
 export type Vertex = Vec<3> | number
+
 export type Polygon<
 	N extends number,
 	TVertex extends Vertex> = Tuple<N, TVertex>
@@ -17,7 +19,7 @@ export type Polyhedron = {
 }
 
 // Helper function to normalize a vector
-const normalize = (v): Vec3 => {
+const normalize = (v: Vec3): Vec3 => {
 	const length = Math.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2);
 	return [v[0] / length, v[1] / length, v[2] / length];
 };
@@ -44,6 +46,7 @@ const VERTICES: Vec<3>[] = [
 	[-PHI, 0, -1],
 	[-PHI, 0, 1],
 ]
+
 const FACES: Polygon<3, number>[] = [
 	[0, 11, 5],
 	[0, 5, 1],
@@ -94,7 +97,12 @@ const subdivide = ({ vertices, faces }: Polyhedron) => {
 		const bIdx = addVertex(b);
 		const cIdx = addVertex(c);
 
-		newFaces.push([v0, aIdx, cIdx], [v1, bIdx, aIdx], [v2, cIdx, bIdx], [aIdx, bIdx, cIdx]);
+		newFaces.push(
+			[v0, aIdx, cIdx], 
+			[v1, bIdx, aIdx], 
+			[v2, cIdx, bIdx], 
+			[aIdx, bIdx, cIdx]
+		);
 	});
 
 	return {vertices, faces: newFaces};

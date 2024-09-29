@@ -47,8 +47,9 @@ export type VertEdge = Tuple<2, number>
 
 
 export const projectToSphere = (geometry, radius: number) => {
-    geometry.vertices.forEach(vertex =>
-        vertex.normalize().multiplyScalar(radius))
+    geometry.vertices.forEach(
+        vertex => vertex.normalize().multiplyScalar(radius)
+    )
     geometry.verticesNeedUpdate = true;
 }
 
@@ -66,28 +67,36 @@ const not = fn => (...args) => !fn(...args)
 const uniq = xs => [...new Set(xs)]
 
 const vecToArr3 = ({x, y, z}) => [x, y, z]
-const hasVertIndex = (i: number, { a, b, c }: TriVert) => a === i || b === i || c === i
+
+const hasVertIndex = (i: number, { a, b, c }: TriVert) => 
+    a === i || b === i || c === i
 
 const getFacesWithCommonVertex = (faces: TriVert[]) => (i: number) =>
 	faces.filter(f => hasVertIndex(i, f))
 
 // Returns array of edge endpoint indices from THREE.Vector3
-const getEdges = ({ a, b, c }: TriVert) => [ [ a, b ], [ b, c ], [ c, a ] ]
+const getEdges = ({ a, b, c }: TriVert) => 
+    [ [ a, b ], [ b, c ], [ c, a ] ]
 
 const getVerts = ({ a, b, c }: TriVert) => [a, b, c]
+
 
 // Apex of triangle: the point opposite the base
 const getApex = base => ({ a, b, c }: TriVert) =>
     [a, b, c].find(v => v !== base[0] && v !== base[1])
 
+
 const getBase = apex => ({ a, b, c }: TriVert) =>
     [a, b, c].find(v => v !== apex)
 
-const vertHasNumAdjacentFaces = (n: number, faces: TriVert[]) => i =>
+
+const vertHasNumAdjacentFaces = (n: number, faces: TriVert[]) => (i: number) =>
     getFacesWithCommonVertex(faces)(i).length === n
+
 
 const faceHasEdge = (edge: VertEdge, face: TriVert) =>
         hasVertIndex(edge[0], face) && hasVertIndex(edge[1], face)
+
 
 const findNextFace = ([center, searchVert], searchFaces) => {
     if (searchFaces.length === 0) return []
@@ -140,19 +149,15 @@ const getAdjacentHex = (geo, oldCenter, cache, facet) => (commonEdge: VertEdge) 
 //         // Get faces with edge, filter out face having `oldCenter` vert, as that is the
 //         // old one which we got the `commonEdge` from.
 //         .find(f => !cache.has(f) && faceHasEdge(commonEdge, f) && !getVerts(f).includes(oldCenter))
-
 //     if (!adjFace) {
 //         // console.log()
 //         return undefined
 //     }
-
 //     // Get center of the new hex.
 //     const center = getApex(commonEdge)(adjFace)
-
 //     // Get other faces which share the new center
 //     const hexFaces = geo.faces
 //         .filter(f => f !== adjFace && hasVertIndex(center, f))
-
 //     // cache.add(adjFace)
 //     // Recursively find other faces
 //     const ordered = [adjFace]
@@ -160,12 +165,10 @@ const getAdjacentHex = (geo, oldCenter, cache, facet) => (commonEdge: VertEdge) 
 //         .concat(findNextFace([center, commonEdge[0]], hexFaces))
 //         // Add faces to the cache
 //         .each(f => cache.add(f))
-    
 //     const verts = ordered
 //         .flatMap(({a, b, c}) => [a, b, c])
 //         .distinct()
 //         .filter(v => v !== center)
-
 //     return { 
 //         center: center, 
 //         faces: ordered,
@@ -194,6 +197,7 @@ const getTileFromCenter = (geo, cache) => (center, i) => {
     }
 }
 
+
 const getHexesAroundTile = (geo, cache, limits, tile): Tile[] => {
     if (cache.length === geo.faces.length) return []
     const { center, faces, facet } = tile
@@ -216,6 +220,7 @@ const getHexesAroundTile = (geo, cache, limits, tile): Tile[] => {
     }
     return [tile, ...hexes]
 }
+
 
 const normalize = (radius, vector) =>
 	vector.clone().normalize().multiplyScalar(radius);

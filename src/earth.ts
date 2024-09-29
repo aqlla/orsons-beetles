@@ -29,6 +29,7 @@ const makeEdgeGeometry = (geo: THREE.BufferGeometry) => new THREE.LineSegments(
 	new THREE.EdgesGeometry(geo), 
 	new THREE.LineBasicMaterial({ color: 0x080808 }));
 
+	
 const cartesianToSpherical = ({ x, y, z }: OVec3) => {
 	const r = Math.sqrt(x * x + y * y + z * z);
     const theta = Math.acos(z / r);
@@ -134,6 +135,7 @@ const isWater = (hexValue: number): boolean => {
     const b = hexValue & 0xFF;
 
     return hexValue < 200000 || (b - r > threshR && b - g > threshG)
+	// return (b - r > threshR && b - g > threshG)
 }
 
 
@@ -149,8 +151,8 @@ const getEarthColor = ({ lat, lon }: LatLon, ctx: TODO) => {
 	const b = pixel[2];
 
     const raw = (r << 16) | (g << 8) | b
-	return isWater(raw)? 0x0040cc : raw
-	// return (r << 16) | (g << 8) | b
+	// return isWater(raw)? 0x0040cc : raw
+	return (r << 16) | (g << 8) | b
 }
 
 const rotateGeometry = (geo: ConvexGeometry & TODO) => {
@@ -171,7 +173,7 @@ const makeTileGeometry = (tile: Tile) => {
 }
 
 
-let tileMap = new Map<string, { tile: Tile, color: number }>()
+const tileMap = new Map<string, { tile: Tile, color: number }>()
 
 export const getTileMap = () => tileMap
 
