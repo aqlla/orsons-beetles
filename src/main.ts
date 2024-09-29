@@ -111,8 +111,7 @@ getEarth(uni.n, uni.r)
     .then(({ earth, outlines, glowMesh }) => {
         let curAxialTiltX = uni.axialTiltX
         let curAxialTiltY = uni.axialTiltY
-        console.log(glowMesh)
-        //glowMesh.scale.setScalar(uni.atmo_scale)
+        glowMesh.scale.setScalar(uni.atmo_scale)
 
         tileMap = getTileMap()
 
@@ -180,26 +179,26 @@ getEarth(uni.n, uni.r)
             if (keys.w) camera.position.applyAxisAngle(X_AXIS, -uni.moveSpeed)
             if (keys.s) camera.position.applyAxisAngle(X_AXIS, uni.moveSpeed)
 
-            raycaster.setFromCamera(pointer, camera);
+            // raycaster.setFromCamera(pointer, camera);
 
-            // calculate objects intersecting the picking ray
-            const intersects = raycaster.intersectObjects(scene.children)
+            // // calculate objects intersecting the picking ray
+            // const intersects = raycaster.intersectObjects(scene.children)
 
-            if (tileMap && intersects.length) {
-                const prevVal = tileMap.get(prevIntersect?.uuid)
-                // if (prevVal) {
-                //     // prevIntersect.object.material.color.set(prevVal.color)
-                // }
+            // if (tileMap && intersects.length) {
+            //     const prevVal = tileMap.get(prevIntersect?.uuid)
+            //     if (prevVal) {
+            //         prevIntersect.material.color.set(prevVal.color)
+            //     }
 
-                // const uuid = intersects[0].object.uuid
-                // if (tileMap.has(uuid)) {
-                //     if (uuid !== prevSelected) {
-                //         prevSelected = uuid
-                //     }
-                //     // intersects[0].object.material.color.set(0xff0000)
-                // }
-                // prevIntersect = intersects[0] as unknown as THREE.Mesh
-            }
+            //     const uuid = intersects[0].object.uuid
+            //     if (tileMap.has(uuid)) {
+            //         if (uuid !== prevSelected) {
+            //             prevSelected = uuid
+            //         }
+            //         (intersects[0].object as THREE.Mesh).material. //.color.set(0xff0000)
+            //     }
+            //     prevIntersect = intersects[0].object as THREE.Mesh
+            // }
 
             camera.lookAt(0, 0, 0)
             renderer.render(scene, camera)
