@@ -111,7 +111,8 @@ getEarth(uni.n, uni.r)
     .then(({ earth, outlines, glowMesh }) => {
         let curAxialTiltX = uni.axialTiltX
         let curAxialTiltY = uni.axialTiltY
-        glowMesh.scale.setScalar(uni.atmo_scale)
+        console.log(glowMesh)
+        //glowMesh.scale.setScalar(uni.atmo_scale)
 
         tileMap = getTileMap()
 
