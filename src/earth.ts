@@ -222,7 +222,7 @@ const makeEarthMeshes = (tiles: Array<Tile>, radius: number) => {
 type EarthMeshes = Record<string, THREE.Object3D>
 
 export const getEarth = (n: number, r: number): Promise<EarthMeshes> =>
-	fetch(`/geometries/goldberg_${n}_${r}.json`)
+	fetch(new URL(`./geometries/goldberg_${n}_${r}.json`, import.meta.url))
 		.then(res => res.json())
 		.then(data => data.map(({ center, vertices, facet, centroid }: Tile) => ({ 
 			facet, center, centroid,
