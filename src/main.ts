@@ -49,12 +49,12 @@ document.body.appendChild(stats.dom)
 
 const gui = new GUI()
 
-const ocFolder = gui.addFolder('Orbital Controls')
-ocFolder.add(uni, 'moveSpeed', 0.01, 0.5).listen()
-const cPosFolder = ocFolder.addFolder('Target')
-cPosFolder.add(controls.target, 'x', -uni.r, uni.r).listen()
-cPosFolder.add(controls.target, 'y', -uni.r, uni.r).listen()
-cPosFolder.add(controls.target, 'z', -uni.r, uni.r).listen()
+// const ocFolder = gui.addFolder('Orbital Controls')
+// ocFolder.add(uni, 'moveSpeed', 0.01, 0.5).listen()
+// const cPosFolder = ocFolder.addFolder('Target')
+// cPosFolder.add(controls.target, 'x', -uni.r, uni.r).listen()
+// cPosFolder.add(controls.target, 'y', -uni.r, uni.r).listen()
+// cPosFolder.add(controls.target, 'z', -uni.r, uni.r).listen()
 
 const cameraFolder = gui.addFolder('Camera')
 cameraFolder.add(camera, 'fov', 0.1, 100).listen().onChange(() => {
