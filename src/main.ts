@@ -66,7 +66,7 @@ camPositionFolder.add(camera.position, 'x', -180, 180).listen()
 camPositionFolder.add(camera.position, 'y', -180, 180).listen()
 camPositionFolder.add(camera.position, 'z', 0, 1000).listen()
 
-cameraFolder.open()
+// cameraFolder.open()
 
 const sunFolder = gui.addFolder('Sun')
 sunFolder.add(sunLight, 'intensity', 0, 5).listen()
@@ -74,7 +74,7 @@ const sunPosFolder = sunFolder.addFolder('Position')
 sunPosFolder.add(sunLight.position, 'x', uni.r + 10, 1000)
 sunPosFolder.add(sunLight.position, 'y', uni.r + 10, 1000)
 sunPosFolder.add(sunLight.position, 'z', uni.r + 10, 1000)
-
+gui.close()
 
 const raycaster = new THREE.Raycaster();
 raycaster.layers.set(1)
