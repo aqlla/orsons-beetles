@@ -8,7 +8,7 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "deploy": "tsc && vite build && git add dist/assets/ && git commit -am \"build - $1\" && git push origin main"
+    "deploy": "tsc && vite build && git add . && git commit -am \"build - $1\" && git push origin main"
   },
   "devDependencies": {
     "@types/dat.gui": "^0.7.13",
