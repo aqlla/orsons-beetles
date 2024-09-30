@@ -115,7 +115,7 @@ const generateWorld = async (n: number, r: number) => {
 	console.log(ico)
 	const tiles = groupFaces(ico);
 	const blob = new Blob([toJson(tiles)], { type: 'application/json' })
-	await saveAs(blob, `/geometries/goldberg_${n}_${r}.json`)
+	await saveAs(blob, `./geometries/goldberg_${n}_${r}.json`)
 	return tiles
 }
 
@@ -222,13 +222,17 @@ const makeEarthMeshes = (tiles: Array<Tile>, radius: number) => {
 type EarthMeshes = Record<string, THREE.Object3D>
 
 export const getEarth = (n: number, r: number): Promise<EarthMeshes> =>
-	fetch(`./geometries/goldberg_${n}_${r}.json`)
+	fetch(`geometries/goldberg_${n}_${r}.json`)
+		.then(res => {
+			console.log(res)
+			return res
+		})
 		.then(res => res.json())
 		.then(data => data.map(({ center, vertices, facet, centroid }: Tile) => ({ 
 			facet, center, centroid,
 			vertices: vertices.map(v => new THREE.Vector3(...v)) 
 		})))
-		.catch(async () => await generateWorld(n, r))
+		// .catch(async () => await generateWorld(n, r))
 		.then(tiles => makeEarthMeshes(tiles, r))
 		.catch(error => {
 			console.log(error)
