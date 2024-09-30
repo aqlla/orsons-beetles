@@ -26,7 +26,7 @@ const uni = {
 const scene = new THREE.Scene()
 
 const camera = new THREE.PerspectiveCamera(uni.fov, window.innerWidth / window.innerHeight, 0.1, 5000)
-camera.position.z = 200 + uni.r
+camera.position.z = 400 + uni.r
 
 const renderer = new THREE.WebGLRenderer({ antialias: true })
 renderer.setSize(window.innerWidth, window.innerHeight)
@@ -37,7 +37,7 @@ const controls = new OrbitControls(camera, renderer.domElement)
 controls.listenToKeyEvents(window)
 
 const sunLight = new THREE.DirectionalLight(0xffffff, 2);
-sunLight.position.set(500, 0, 500);
+sunLight.position.set(900, 0, 900);
 sunLight.castShadow = true
 scene.add(sunLight);
 

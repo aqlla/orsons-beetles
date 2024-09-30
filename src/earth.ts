@@ -223,16 +223,12 @@ type EarthMeshes = Record<string, THREE.Object3D>
 
 export const getEarth = (n: number, r: number): Promise<EarthMeshes> =>
 	fetch(`/orsons-beetles/geometries/goldberg_${n}_${r}.json`)
-		// .then(res => {
-		// 	console.log(res.text())
-		// 	return res
-		// })
 		.then(res => res.json())
 		.then(data => data.map(({ center, vertices, facet, centroid }: Tile) => ({ 
 			facet, center, centroid,
 			vertices: vertices.map(v => new THREE.Vector3(...v)) 
 		})))
-		// .catch(async () => await generateWorld(n, r))
+		.catch(async () => await generateWorld(n, r))
 		.then(tiles => makeEarthMeshes(tiles, r))
 		.catch(error => {
 			console.log(error)
