@@ -22,9 +22,7 @@ const uni = {
     axialTiltY: 0,
 }
 
-
 const scene = new THREE.Scene()
-
 const camera = new THREE.PerspectiveCamera(uni.fov, window.innerWidth / window.innerHeight, 0.1, 5000)
 camera.position.z = 400 + uni.r
 
