@@ -6,12 +6,54 @@
     <title>Orson's Beetles</title>
     <link rel="stylesheet" href="./style.css">
 
-    <script type="module" crossorigin src="/orsons-beetles/assets/index-BF8Ca0Vb.js"></script>
   </head>
 
   <body>
-<!--    <img id="projection" src="./img/world.200411.3x5400x2700.png"/>-->
-    <img id="projection" src="./img/earth_color-map.5400x2700.jpg"/>
-<!--    <img id="projection-height" src="./img/earth_height-map.5400x2700_8bit.jpg"/>-->
+    <header>
+      <h2>Some 3D Stuff.</h2>
+    </header>
+    <main>
+      <section>
+        <header>
+          <h3>World Viewer</h3>
+        </header>
+        <form id="world-picker">
+          <label for="subdivisions">World size (number of subdivisions):</label>
+          <select id="subdivisions" name="subdivisions"></select>
+          <!-- <input type="submit" formmethod="get" formtarget="worldview.html"></input> -->
+          <button onclick="navigate()">Go...</button>
+        </form>
+      </section>
+
+      <section>
+        <header>
+          <h3>People 2: Still Peopling</h3>
+        </header>
+      </section>
+    </main>
   </body>
+
+  <script>
+    const createElement = (tagName, options) => {
+      const el = document.createElement(tagName)
+      for (let key of Object.keys(options)) {
+        el[key] = options[key]
+      }
+      return el
+    }
+
+    function navigate() {
+      const n = document.getElementById("subdivisions").value;
+      const targetUrl = `worldview?subdivisions=${n}`;
+      window.location.href = targetUrl;
+    }
+
+    const allowedValues = [23, 29, 44, 56, 68, 71, 77, 80, 89];
+    const selectElement = document.getElementById("subdivisions");
+  
+    allowedValues
+      .map(v => createElement('option', { value: v, text: v }))
+      .forEach(e => selectElement.appendChild(e))
+  </script>
+  
 </html>

@@ -18,7 +18,7 @@ const uni = {
     rotationSpeed: .03,
     zoomSpeed: .5,
     rotateEarth: true,
-    axialTiltX: 0,
+    axialTiltX: 23.4,
     axialTiltY: 0,
 }
 
