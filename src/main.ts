@@ -17,7 +17,7 @@ const uni = {
     moveSpeed: .01,
     rotationSpeed: .03,
     zoomSpeed: .5,
-    rotateEarth: false,
+    rotateEarth: true,
     axialTiltX: 0,
     axialTiltY: 0,
 }
